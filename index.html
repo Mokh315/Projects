@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0b1120">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<title>SmartCrowd Guardian — حارس الحشود الذكي</title>
+
+<!-- ===== Embedded PWA manifest (data URI, self-contained) ===== -->
+<link rel="manifest" id="mf" href="manifest.webmanifest">
+<link rel="apple-touch-icon" id="ati" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+
+<style>
+:root{
+  --bg:#0b1120; --panel:#111a2e; --panel2:#0e1728; --line:#1e2c48;
+  --ink:#e6edf7; --muted:#8ea3c2; --accent:#38bdf8; --accent2:#22d3ee;
+  --safe:#22c55e; --warn:#eab308; --danger:#f97316; --crit:#ef4444;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+  --r:16px;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:"Segoe UI",Tahoma,system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+body{min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
+h1,h2,h3{margin:0;font-weight:700}
+.hide{display:none !important}
+
+/* Header */
+header{position:sticky;top:0;z-index:40;background:linear-gradient(180deg,#0b1120 70%,rgba(11,17,32,.85));
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 14px;
+  padding-top:calc(10px + env(safe-area-inset-top))}
+.hrow{display:flex;align-items:center;gap:12px;max-width:1240px;margin:0 auto}
+.logo{width:42px;height:42px;flex:0 0 42px;border-radius:12px;
+  background:radial-gradient(circle at 30% 25%,#0ea5e9,#1e3a8a);
+  display:grid;place-items:center;box-shadow:0 4px 14px rgba(14,165,233,.4)}
+.logo svg{width:26px;height:26px}
+.brand{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.brand b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand span{font-size:11px;color:var(--muted)}
+.spacer{flex:1}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;transition:.15s;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.icon{padding:8px 10px}
+.btn.primary{background:linear-gradient(135deg,#0ea5e9,#2563eb);border:none;color:#fff}
+.btn.primary:hover{filter:brightness(1.08);color:#fff}
+
+/* Layout */
+main{max-width:1240px;margin:0 auto;padding:14px;display:grid;gap:14px}
+.tabs{display:flex;gap:8px;background:var(--panel2);padding:6px;border-radius:14px;border:1px solid var(--line)}
+.tab{flex:1;text-align:center;padding:10px;border-radius:10px;font-weight:700;font-size:14px;
+  cursor:pointer;color:var(--muted);transition:.15s}
+.tab.active{background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;box-shadow:var(--shadow)}
+
+.grid{display:grid;gap:14px}
+@media(min-width:900px){.grid.cols{grid-template-columns:1.5fr 1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px;box-shadow:var(--shadow)}
+.card h3{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;
+  margin-bottom:10px;font-weight:700;display:flex;align-items:center;gap:8px}
+.card h3 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+
+/* Heatmap */
+.mapwrap{position:relative;width:100%;background:#060b16;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+#heat{width:100%;display:block;image-rendering:auto}
+.maptag{position:absolute;font-size:10px;font-weight:700;color:#cbd5e1;background:rgba(6,11,22,.72);
+  padding:2px 6px;border-radius:6px;pointer-events:none}
+.legend{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:11px;color:var(--muted)}
+.legbar{flex:1;height:10px;border-radius:6px;
+  background:linear-gradient(90deg,#0b3d2e,#166534,#65a30d,#eab308,#f97316,#dc2626,#7f1d1d)}
+
+/* Risk gauge */
+.gauge{display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px 0}
+.gwrap{position:relative;width:190px;height:110px}
+.gval{position:absolute;bottom:2px;left:0;right:0;text-align:center}
+.gval b{font-size:38px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.gval span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.statuschip{padding:6px 16px;border-radius:999px;font-weight:800;font-size:15px;letter-spacing:.02em}
+
+/* Action banner */
+.action{border-radius:12px;padding:14px;display:flex;gap:12px;align-items:center;
+  border:1px solid var(--line);background:var(--panel2)}
+.action .ico{width:40px;height:40px;flex:0 0 40px;border-radius:10px;display:grid;place-items:center;font-size:22px}
+.action .txt{min-width:0}
+.action .txt b{display:block;font-size:15px}
+.action .txt span{font-size:12px;color:var(--muted)}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:560px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stat .k{font-size:11px;color:var(--muted);font-weight:600}
+.stat .v{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:3px}
+.stat .u{font-size:10px;color:var(--muted)}
+
+/* Controls */
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+select,input[type=number]{background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+  border-radius:10px;padding:9px 11px;font-size:14px;font-family:inherit;font-weight:600}
+label.fld{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);font-weight:600}
+input[type=range]{accent-color:var(--accent);width:100%}
+.uladder{display:flex;gap:6px;margin-top:6px}
+.urung{flex:1;text-align:center;padding:8px 4px;border-radius:9px;background:var(--panel2);
+  border:1px solid var(--line);font-size:11px;font-weight:700;color:var(--muted);transition:.15s}
+.urung.on{color:#fff}
+
+/* Charts */
+.chartbox{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px}
+canvas.chart{width:100%;height:120px;display:block}
+
+/* Manual grid */
+.zgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.zone{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px}
+.zone .zn{font-size:12px;font-weight:700;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.zone .zn small{color:var(--muted);font-weight:600}
+.zone input{width:100%}
+.zbar{height:6px;border-radius:4px;margin-top:8px;background:#1e293b;overflow:hidden}
+.zbar i{display:block;height:100%;border-radius:4px}
+
+/* Info */
+.prose{font-size:13.5px;line-height:1.85;color:#cbd5e1}
+.prose b{color:var(--ink)}
+.kbd{font-family:ui-monospace,Menlo,Consolas,monospace;background:#0a1425;border:1px solid var(--line);
+  border-radius:6px;padding:1px 6px;font-size:12px;color:var(--accent2)}
+.foot{text-align:center;color:var(--muted);font-size:11px;padding:8px 0 20px;line-height:1.7}
+details{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px}
+summary{cursor:pointer;font-weight:700;font-size:13px}
+.pill{display:inline-block;background:#0a1425;border:1px solid var(--line);border-radius:999px;
+  padding:3px 10px;font-size:11px;color:var(--muted);margin:2px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0a1425;
+  border:1px solid var(--accent);color:var(--ink);padding:12px 18px;border-radius:12px;
+  box-shadow:var(--shadow);z-index:99;font-size:14px;font-weight:600;opacity:0;transition:.3s;pointer-events:none}
+.toast.show{opacity:1}
+/* install modal */
+.modal{position:fixed;inset:0;z-index:100;background:rgba(4,8,16,.72);backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;padding:18px}
+.modal.show{display:flex}
+.sheet{background:var(--panel);border:1px solid var(--line);border-radius:18px;max-width:440px;width:100%;
+  padding:20px;box-shadow:var(--shadow);max-height:88vh;overflow:auto}
+.sheet h2{font-size:18px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.sheet .lead{color:var(--muted);font-size:13px;margin:0 0 14px;line-height:1.6}
+.step{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.step .n{flex:0 0 26px;width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#0ea5e9,#2563eb);
+  color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.step .d{font-size:13.5px;line-height:1.6}
+.step .d b{color:var(--ink)}
+.sheet .close{margin-top:14px;width:100%;justify-content:center}
+.warnbox{background:#3a2205;border:1px solid #a16207;border-radius:10px;padding:10px 12px;font-size:12.5px;
+  color:#fde68a;line-height:1.6;margin-bottom:12px}
+.okbox{background:#052e1a;border:1px solid #15803d;border-radius:10px;padding:10px 12px;font-size:12.5px;
+  color:#86efac;line-height:1.6;margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2 3 6v6c0 5 3.8 8.4 9 10 5.2-1.6 9-5 9-10V6z"/>
+        <circle cx="12" cy="11" r="2.4"/>
+      </svg>
+    </div>
+    <div class="brand">
+      <b id="t_title">حارس الحشود الذكي</b>
+      <span id="t_sub">نظام الاستشعار والتنبؤ والتدخّل للسلامة في التجمعات</span>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn icon" id="installBtn" title="تثبيت">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 21h14"/></svg>
+      <span id="t_install">تثبيت</span>
+    </button>
+    <button class="btn" id="langBtn">EN</button>
+  </div>
+</header>
+
+<main>
+  <div class="tabs">
+    <div class="tab active" data-mode="sim" id="t_tab_sim">وضع المحاكاة</div>
+    <div class="tab" data-mode="manual" id="t_tab_manual">الإدخال التشغيلي</div>
+    <div class="tab" data-mode="info" id="t_tab_info">عن النموذج</div>
+  </div>
+
+  <!-- ============ SIM + MANUAL share the dashboard ============ -->
+  <section id="view-dash">
+    <div class="grid cols">
+      <!-- Heatmap -->
+      <div class="card">
+        <h3><span class="dot"></span><span id="t_map">خريطة كثافة الحشد اللحظية</span></h3>
+        <div class="mapwrap">
+          <canvas id="heat" width="500" height="300"></canvas>
+          <div class="maptag" style="top:6px;inset-inline-start:6px" id="t_entrance">◀ المدخل</div>
+          <div class="maptag" style="top:6px;inset-inline-end:6px" id="t_gate">البوابة / التفريغ ▶</div>
+        </div>
+        <div class="legend">
+          <span id="t_low">منخفض</span>
+          <div class="legbar"></div>
+          <span id="t_high">حرج</span>
+          <span style="margin-inline-start:auto" id="t_dronelbl">🛩️ <span id="t_drone">الدرون</span></span>
+        </div>
+      </div>
+
+      <!-- Risk gauge + action -->
+      <div class="card">
+        <h3><span class="dot"></span><span id="t_risk">مؤشر الخطر Φ</span></h3>
+        <div class="gauge">
+          <div class="gwrap">
+            <svg viewBox="0 0 190 110" width="190" height="110">
+              <path d="M15 100 A80 80 0 0 1 175 100" fill="none" stroke="#1e293b" stroke-width="16" stroke-linecap="round"/>
+              <path id="gaugeArc" d="M15 100 A80 80 0 0 1 175 100" fill="none" stroke="#22c55e" stroke-width="16" stroke-linecap="round"
+                    stroke-dasharray="251.3" stroke-dashoffset="251.3"/>
+            </svg>
+            <div class="gval"><b id="phiVal">0.00</b><span id="t_phimax">أقصى Φ في الميدان</span></div>
+          </div>
+          <div class="statuschip" id="statusChip" style="background:#14331f;color:#4ade80">آمن</div>
+        </div>
+        <div class="action" style="margin-top:12px">
+          <div class="ico" id="actIco" style="background:#14331f">✓</div>
+          <div class="txt">
+            <b id="actTitle">الوضع آمن</b>
+            <span id="actSub">لا يلزم أي إجراء — استمرار المراقبة</span>
+          </div>
+        </div>
+        <div class="uladder" id="uladder">
+          <div class="urung" data-u="0">إغلاق<br>u=0</div>
+          <div class="urung" data-u="0.25">جزئي<br>u=0.25</div>
+          <div class="urung" data-u="0.55">مرتفع<br>u=0.55</div>
+          <div class="urung" data-u="0.90">أقصى<br>u=0.90</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="card">
+      <h3><span class="dot"></span><span id="t_stats">المؤشرات الحية والضمانات الرياضية</span></h3>
+      <div class="stats">
+        <div class="stat"><div class="k" id="t_meanrho">متوسط الكثافة</div><div class="v"><span id="meanRho">0.00</span></div><div class="u">أشخاص/م²</div></div>
+        <div class="stat"><div class="k" id="t_maxrho">أقصى كثافة</div><div class="v"><span id="maxRho">0.00</span> / 6.0</div><div class="u" id="t_cap">السعة القصوى ρmax</div></div>
+        <div class="stat"><div class="k" id="t_ulevel">التفريغ الحالي u</div><div class="v" id="uVal">0.00</div><div class="u" id="t_gatestate">حالة البوابات</div></div>
+        <div class="stat"><div class="k" id="t_mass">تدقيق الكتلة</div><div class="v" id="massAudit" style="font-size:15px">0.0e+0</div><div class="u" id="t_massu">انحراف (≈ دقة الآلة)</div></div>
+      </div>
+      <div class="controls" style="margin-top:12px;justify-content:space-between">
+        <div class="controls" id="simControls">
+          <label class="fld" id="t_scenwrap">السيناريو
+            <select id="scenario">
+              <option value="haram">الحرم / المطاف</option>
+              <option value="stadium">ملعب رياضي</option>
+              <option value="festival">مهرجان مفتوح</option>
+              <option value="calm">حالة هادئة</option>
+            </select>
+          </label>
+          <label class="fld" id="t_speedwrap">السرعة
+            <input type="range" id="speed" min="1" max="8" value="3" style="width:100px">
+          </label>
+          <button class="btn primary" id="playBtn">⏸ إيقاف مؤقت</button>
+          <button class="btn" id="resetBtn">↺ <span id="t_reset">تصفير</span></button>
+        </div>
+        <div class="pill" id="cflPill">CFL = 0.065 ✓ (آمن ×15)</div>
+      </div>
+    </div>
+
+    <!-- Charts (sim only) -->
+    <div class="card" id="chartCard">
+      <h3><span class="dot"></span><span id="t_trend">التطور الزمني: الخطر Φ مقابل التحكم u</span></h3>
+      <div class="chartbox"><canvas id="chart" class="chart" width="900" height="160"></canvas></div>
+      <div class="legend" style="justify-content:center;gap:18px;margin-top:6px">
+        <span style="color:#f472b6">■ <span id="t_l_phi">أقصى Φ</span></span>
+        <span style="color:#38bdf8">■ <span id="t_l_u">التفريغ u</span></span>
+        <span style="color:#a3e635">■ <span id="t_l_rho">متوسط الكثافة</span></span>
+      </div>
+    </div>
+
+    <!-- Manual input panel -->
+    <div class="card hide" id="manualCard">
+      <h3><span class="dot"></span><span id="t_manual_h">إدخال قياسات الكثافة الحقيقية (أشخاص/م²)</span></h3>
+      <p class="prose" id="t_manual_help" style="margin-top:0">أدخل الكثافة المقيسة في كل منطقة (0 إلى 6). يحسب النظام مؤشر الخطر Φ والإجراء الموصى به فوراً وفق النموذج المعتمد.</p>
+      <div class="zgrid" id="zoneGrid"></div>
+      <div class="controls" style="margin-top:12px">
+        <button class="btn primary" id="computeBtn">⚡ <span id="t_compute">احسب الخطر والإجراء</span></button>
+        <button class="btn" id="loadMapBtn">🗺️ <span id="t_loadmap">اعرض على الخريطة</span></button>
+        <label class="fld" id="t_surgewrap">تصاعد زمني مُقدّر
+          <input type="range" id="surge" min="0" max="100" value="0" style="width:120px">
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ INFO ============ -->
+  <section id="view-info" class="hide">
+    <div class="card">
+      <h3><span class="dot"></span><span id="t_about_h">فكرة الجهاز والتطبيق</span></h3>
+      <div class="prose" id="aboutBody"></div>
+      <details>
+        <summary id="t_params_h">المعاملات الرياضية المعتمدة</summary>
+        <div style="margin-top:8px">
+          <span class="pill">ρmax = 6.0</span><span class="pill">v_f = 1.3</span>
+          <span class="pill">α₁=0.40 · α₂=0.35 · α₃=0.25</span>
+          <span class="pill">P_max=5.0</span><span class="pill">C_max=2.0</span>
+          <span class="pill">Δx=Δy=1.0</span><span class="pill">Δt=0.05</span>
+          <span class="pill">ρ*=3 · f_max=1.95</span>
+          <span class="pill">CFL=0.065</span>
+        </div>
+      </details>
+      <details>
+        <summary id="t_thr_h">عتبات التحكّم Φ ← u</summary>
+        <div class="prose" style="margin-top:8px" id="thrBody"></div>
+      </details>
+    </div>
+  </section>
+
+  <div class="foot">
+    <div id="t_foot1">القلب الرياضي المعتمد: قانون حفظ LWR + مخطط Godunov المصحّح + مصدر/مصرف محدود سعوياً — يضمن ρ∈[0,6] وتدقيق كتلة دقيق.</div>
+    <div id="t_foot2">مبني على بحث «دراسة رياضية شاملة لنموذج طائرة حارس الحشود الذكية» — جامعة القصيم.</div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<!-- Install instructions modal -->
+<div class="modal" id="installModal">
+  <div class="sheet">
+    <h2><span>📲</span> <span id="im_title">تثبيت التطبيق</span></h2>
+    <p class="lead" id="im_lead"></p>
+    <div id="im_body"></div>
+    <button class="btn primary close" id="im_close" onclick="document.getElementById('installModal').classList.remove('show')">
+      <span id="im_ok">حسناً</span>
+    </button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   1) CERTIFIED MODEL CORE  (from the paper)
+   ============================================================ */
+const P = {
+  rhomax:6.0, vf:1.3, a1:0.40, a2:0.35, a3:0.25,
+  Pmax:5.0, Cmax:2.0, dx:1.0, dy:1.0, dt:0.05,
+  Nx:100, Ny:60, D0:0.05
+};
+const RHOSTAR = P.rhomax/2;              // 3
+const FMAX = P.vf*P.rhomax/4;            // 1.95
+const lambda = P.dt/P.dx;
+const CFL = P.vf*P.dt/P.dx;              // 0.065
+
+// Greenshields flux f(rho)=vf*rho*(1-rho/rhomax)
+function f(r){ return P.vf*r*(1 - r/P.rhomax); }
+// Exact Godunov flux for concave f (Thm: godflux)
+function godunov(rL,rR){
+  return Math.min( f(Math.min(rL,RHOSTAR)), f(Math.max(rR,RHOSTAR)) );
+}
+// Threshold feedback  u = kappa(PhiMax)  (Thm: kappa)
+function kappa(phi){
+  if(phi<0.30) return 0;
+  if(phi<0.60) return 0.25;
+  if(phi<0.80) return 0.55;
+  return 0.90;
+}
+// Risk map Phi=R/(1+R)  in [0,1)
+function phiOf(R){ return R/(1+R); }
+
+/* Full 2-D grid state: rho[y][x], applied row-wise in x (y passive) */
+function makeGrid(v=0){
+  const g=new Array(P.Ny); for(let j=0;j<P.Ny;j++){g[j]=new Float64Array(P.Nx).fill(v);} return g;
+}
+let rho = makeGrid(0);
+let rhoPrev = makeGrid(0);
+let Bgate = new Float64Array(P.Nx);      // gate profile B(x) near bottleneck
+let Ssrc  = new Float64Array(P.Nx);      // inflow source S(x) near entrance
+let massAuditAcc = 0;                     // running exact mass-budget residual check
+let uCur = 0, phiMaxCur = 0, argmax={x:P.Nx*0.6, y:P.Ny/2};
+let drone = {x:P.Nx*0.5, y:P.Ny*0.5};    // drone position (grid coords)
+let tick = 0, curScen='haram';
+
+// Scenario dynamics: persistent source/gate + realistic surge (compression) events.
+// A surge is a sharp single-step density injection near the bottleneck -> big (∂ρ/∂t)_+
+// -> risk spikes -> threshold control engages -> discharge clears it -> risk decays.
+const SCEN = {
+  haram:    {src:0.20, gate:1.20, surge:{amp:1.6, period:210, at:40, cx:56, cy:30, sx:5, sy:9}},
+  stadium:  {src:0.16, gate:1.20, surge:{amp:2.6, period:190, at:30, cx:58, cy:30, sx:5, sy:7}},
+  festival: {src:0.24, gate:1.05, surge:{amp:1.1, period:150, at:20, cx:52, cy:30, sx:7, sy:11}},
+  calm:     {src:0.05, gate:1.20, surge:{amp:0.0, period:999, at:0,  cx:50, cy:30, sx:6, sy:9}}
+};
+function injectBurst(cx,cy,amp,sx,sy){
+  for(let j=0;j<P.Ny;j++)for(let i=0;i<P.Nx;i++)
+    rho[j][i]=Math.min(P.rhomax, rho[j][i]+amp*Math.exp(-Math.pow((i-cx)/sx,2)-Math.pow((j-cy)/sy,2)));
+}
+
+function configField(gateAmp=0.9, srcAmp=0.15){
+  // Source near x=10, gate centred at bottleneck x=60 (as in the paper's run)
+  for(let i=0;i<P.Nx;i++){
+    Ssrc[i]  = srcAmp * Math.exp(-Math.pow((i-10)/4,2));
+    Bgate[i] = gateAmp * Math.exp(-Math.pow((i-60)/6,2));
+  }
+}
+
+/* One certified time step (steps 1-5 of the adopted algorithm) */
+function stepModel(){
+  const {Nx,Ny,rhomax,dt}=P;
+  tick++;
+  // scenario surge event: a sharp compression precursor near the bottleneck
+  const sg=SCEN[curScen].surge;
+  if(sg.amp>0 && (tick % sg.period)===sg.at){ injectBurst(sg.cx,sg.cy,sg.amp,sg.sx,sg.sy); }
+  // temporal compression precursor Cr uses previous state
+  // 1) risk field first (uses current rho as rho^n, rhoPrev as rho^{n-1})
+  let phiMax=0, amx=argmax.x, amy=argmax.y;
+  for(let j=0;j<Ny;j++){
+    for(let i=0;i<Nx;i++){
+      const r=rho[j][i];
+      // spatial gradient |∇rho|^2 (central diff, Neumann edges)
+      const ip=Math.min(i+1,Nx-1), im=Math.max(i-1,0);
+      const jp=Math.min(j+1,Ny-1), jm=Math.max(j-1,0);
+      const rx=(rho[j][ip]-rho[j][im])/(2*P.dx);
+      const ry=(rho[jp][i]-rho[jm][i])/(2*P.dy);
+      const gradSq=rx*rx+ry*ry;
+      const varV=Math.pow(P.vf/rhomax,2)*gradSq;           // Var(v)
+      const Cr=Math.max(0,(r-rhoPrev[j][i])/dt);            // (∂t rho)_+
+      const R=P.a1*(r/rhomax)+P.a2*(r*varV/P.Pmax)+P.a3*(Cr/P.Cmax);
+      const ph=phiOf(R);
+      if(ph>phiMax){phiMax=ph;amx=i;amy=j;}
+    }
+  }
+  const u=kappa(phiMax);
+  uCur=u; phiMaxCur=phiMax; argmax={x:amx,y:amy};
+
+  // 2) advance density: Godunov transport + capped source + capped sink, per row
+  const nxt=makeGrid(0);
+  let srcSum=0, sinkSum=0, bflux=0;
+  for(let j=0;j<Ny;j++){
+    const row=rho[j];
+    // Godunov fluxes at faces i+1/2 : F[i] = F^G(row[i],row[i+1]); boundary: outflow (copy)
+    const F=new Float64Array(Nx+1);
+    F[0]=godunov(row[0],row[0]);                 // inflow face (upwind, non-negative)
+    for(let i=0;i<Nx-1;i++) F[i+1]=godunov(row[i],row[i+1]);
+    F[Nx]=godunov(row[Nx-1],row[Nx-1]);          // outflow face
+    bflux += (F[Nx]-F[0]);                        // net boundary flux for this row
+    for(let i=0;i<Nx;i++){
+      // transport predictor
+      let hat = row[i]-lambda*(F[i+1]-F[i]);
+      if(hat<0) hat=0; if(hat>rhomax) hat=rhomax; // (invariant guaranteed; guard rounding)
+      // capped source
+      const Seff=Math.min(Ssrc[i], Math.max(0,(rhomax-hat)/dt));
+      let tld=hat+dt*Seff;
+      // capped sink (discharge grows with feedback u in gated region)
+      const Deff=Math.min(P.D0+Bgate[i]*u, tld/dt);
+      let rn=tld-dt*Deff;
+      if(rn<0) rn=0; if(rn>rhomax) rn=rhomax;
+      nxt[j][i]=rn;
+      srcSum+=Seff; sinkSum+=Deff;
+    }
+  }
+  // exact discrete mass budget residual (should be ~machine precision):
+  // M^{n+1}-M^n = Δt Σ(S_eff−D_eff)ΔA − Δt·(boundary flux)   [eq. (budget)]
+  const Mold=totalMass(rho), Mnew=totalMass(nxt);
+  const expected = dt*(srcSum-sinkSum)*P.dx*P.dy - dt*bflux*P.dy;
+  massAuditAcc = Math.abs((Mnew-Mold) - expected);
+
+  rhoPrev=rho; rho=nxt;
+
+  // 3) drone pursuit toward argmax hotspot (finite-time kinematic pursuit)
+  const tx=argmax.x, ty=argmax.y;
+  const dxp=tx-drone.x, dyp=ty-drone.y, dist=Math.hypot(dxp,dyp);
+  const sigma=1.4; // grid units per step
+  if(dist>0.01){ const s=Math.min(sigma,dist)/dist; drone.x+=s*dxp; drone.y+=s*dyp; }
+}
+
+function totalMass(g){ let m=0; for(let j=0;j<P.Ny;j++){const r=g[j];for(let i=0;i<P.Nx;i++)m+=r[i];} return m*P.dx*P.dy; }
+function meanDensity(){ return totalMass(rho)/(P.Nx*P.Ny*P.dx*P.dy); }
+function maxDensity(){ let m=0; for(let j=0;j<P.Ny;j++)for(let i=0;i<P.Nx;i++){if(rho[j][i]>m)m=rho[j][i];} return m; }
+
+/* Scenario initial conditions */
+function initScenario(name){
+  curScen=name; tick=0;
+  rho=makeGrid(0); rhoPrev=makeGrid(0); massAuditAcc=0; chartData=[];
+  drone={x:P.Nx*0.5,y:P.Ny*0.5};
+  const s=SCEN[name]; configField(s.gate, s.src);
+  const blob=(cx,cy,amp,sx,sy)=>{
+    for(let j=0;j<P.Ny;j++)for(let i=0;i<P.Nx;i++){
+      rho[j][i]=Math.min(P.rhomax, rho[j][i]+amp*Math.exp(-Math.pow((i-cx)/sx,2)-Math.pow((j-cy)/sy,2)));
+    }
+  };
+  if(name==='haram'){ blob(38,30,3.6,11,15); blob(56,30,3.2,7,10); }
+  else if(name==='stadium'){ blob(48,20,3.2,13,7); blob(48,42,3.2,13,7); blob(60,31,2.6,6,9); }
+  else if(name==='festival'){ blob(35,30,3.0,15,17); blob(62,30,2.4,10,13); }
+  else { blob(45,30,1.8,14,16); }
+  for(let j=0;j<P.Ny;j++) rhoPrev[j]=rho[j].slice();
+}
+
+/* ============================================================
+   2) RENDERING  (heatmap + gauge + charts)
+   ============================================================ */
+const heat=document.getElementById('heat'), hx=heat.getContext('2d');
+function colorFor(v){ // 0..rhomax -> green->yellow->orange->red->dark red
+  const t=Math.max(0,Math.min(1,v/P.rhomax));
+  const stops=[[11,61,46],[22,101,52],[101,163,13],[234,179,8],[249,115,22],[220,38,38],[127,29,29]];
+  const s=t*(stops.length-1); const i=Math.floor(s), fr=s-i;
+  const a=stops[i], b=stops[Math.min(i+1,stops.length-1)];
+  return `rgb(${a[0]+(b[0]-a[0])*fr|0},${a[1]+(b[1]-a[1])*fr|0},${a[2]+(b[2]-a[2])*fr|0})`;
+}
+let off=document.createElement('canvas'); off.width=P.Nx; off.height=P.Ny;
+let octx=off.getContext('2d'); let idat=octx.createImageData(P.Nx,P.Ny);
+function drawHeat(){
+  const d=idat.data;
+  for(let j=0;j<P.Ny;j++)for(let i=0;i<P.Nx;i++){
+    const t=Math.max(0,Math.min(1,rho[j][i]/P.rhomax));
+    const stops=[[11,61,46],[22,101,52],[101,163,13],[234,179,8],[249,115,22],[220,38,38],[127,29,29]];
+    const s=t*(stops.length-1); const k=Math.floor(s), fr=s-k;
+    const a=stops[k], b=stops[Math.min(k+1,stops.length-1)];
+    const p=(j*P.Nx+i)*4;
+    d[p]=a[0]+(b[0]-a[0])*fr; d[p+1]=a[1]+(b[1]-a[1])*fr; d[p+2]=a[2]+(b[2]-a[2])*fr; d[p+3]=255;
+  }
+  octx.putImageData(idat,0,0);
+  // scale to display canvas
+  const W=heat.clientWidth, H=W*P.Ny/P.Nx;
+  if(heat.width!==Math.round(W)||heat.height!==Math.round(H)){heat.width=Math.round(W);heat.height=Math.round(H);}
+  hx.imageSmoothingEnabled=true;
+  hx.clearRect(0,0,heat.width,heat.height);
+  hx.drawImage(off,0,0,heat.width,heat.height);
+  const sx=heat.width/P.Nx, sy=heat.height/P.Ny;
+  // gate line
+  hx.strokeStyle='rgba(56,189,248,.55)'; hx.lineWidth=2; hx.setLineDash([6,5]);
+  hx.beginPath(); hx.moveTo(60*sx,0); hx.lineTo(60*sx,heat.height); hx.stroke(); hx.setLineDash([]);
+  // hotspot marker
+  hx.strokeStyle='rgba(255,255,255,.9)'; hx.lineWidth=2;
+  hx.beginPath(); hx.arc(argmax.x*sx,argmax.y*sy,12,0,7); hx.stroke();
+  // drone marker
+  hx.fillStyle='#e0f2fe'; hx.strokeStyle='#0ea5e9'; hx.lineWidth=2;
+  hx.save(); hx.translate(drone.x*sx,drone.y*sy);
+  hx.beginPath(); hx.arc(0,0,7,0,7); hx.fill(); hx.stroke();
+  hx.strokeStyle='rgba(224,242,254,.8)';
+  hx.beginPath(); hx.moveTo(-11,-11);hx.lineTo(11,11);hx.moveTo(11,-11);hx.lineTo(-11,11); hx.stroke();
+  hx.restore();
+}
+
+const arc=document.getElementById('gaugeArc'), ARC_LEN=251.3;
+function statusOf(phi){
+  if(phi<0.30) return {key:'safe',   col:'#22c55e', bg:'#14331f', fg:'#4ade80'};
+  if(phi<0.60) return {key:'watch',  col:'#eab308', bg:'#332b0f', fg:'#facc15'};
+  if(phi<0.80) return {key:'high',   col:'#f97316', bg:'#3a220f', fg:'#fb923c'};
+  return               {key:'crit',   col:'#ef4444', bg:'#3a1414', fg:'#f87171'};
+}
+function drawGauge(phi){
+  arc.style.stroke=statusOf(phi).col;
+  arc.style.strokeDashoffset = ARC_LEN*(1-Math.min(phi,0.999));
+  document.getElementById('phiVal').textContent=phi.toFixed(2);
+}
+
+/* chart */
+let chartData=[]; const chart=document.getElementById('chart'), cx=chart.getContext('2d');
+function pushChart(phi,u,mean){ chartData.push({phi,u,mean:mean/P.rhomax}); if(chartData.length>240)chartData.shift(); }
+function drawChart(){
+  const W=chart.width=chart.clientWidth*devicePixelRatio, H=chart.height=160*devicePixelRatio;
+  cx.clearRect(0,0,W,H); cx.lineWidth=2*devicePixelRatio;
+  // gridlines
+  cx.strokeStyle='rgba(148,163,184,.12)'; cx.lineWidth=1*devicePixelRatio;
+  for(let g=0;g<=4;g++){const y=H*g/4;cx.beginPath();cx.moveTo(0,y);cx.lineTo(W,y);cx.stroke();}
+  const n=chartData.length; if(n<2) return;
+  const plot=(key,col)=>{
+    cx.strokeStyle=col; cx.lineWidth=2*devicePixelRatio; cx.beginPath();
+    chartData.forEach((d,i)=>{const x=W*i/(n-1), y=H*(1-Math.min(1,d[key]));i?cx.lineTo(x,y):cx.moveTo(x,y);});
+    cx.stroke();
+  };
+  plot('mean','#a3e635'); plot('u','#38bdf8'); plot('phi','#f472b6');
+}
+
+/* ============================================================
+   3) UI STATE, LOOP, MODES
+   ============================================================ */
+let mode='sim', playing=true, speed=3, rafPending=false;
+function refreshDash(){
+  drawHeat(); drawGauge(phiMaxCur);
+  const st=statusOf(phiMaxCur), L=LANG[curLang];
+  const chip=document.getElementById('statusChip');
+  chip.textContent=L.status[st.key]; chip.style.background=st.bg; chip.style.color=st.fg;
+  // action banner
+  const act=L.actions[st.key];
+  document.getElementById('actIco').textContent=act.icon;
+  document.getElementById('actIco').style.background=st.bg;
+  document.getElementById('actTitle').textContent=act.title;
+  document.getElementById('actSub').textContent=act.sub;
+  document.getElementById('actTitle').style.color=st.fg;
+  // u ladder highlight
+  document.querySelectorAll('.urung').forEach(r=>{
+    const on=parseFloat(r.dataset.u)===uCur;
+    r.classList.toggle('on',on);
+    r.style.background=on?st.col:''; r.style.borderColor=on?st.col:'';
+    r.style.color=on?'#fff':'';
+  });
+  // stats
+  document.getElementById('meanRho').textContent=meanDensity().toFixed(2);
+  document.getElementById('maxRho').textContent=maxDensity().toFixed(2);
+  document.getElementById('uVal').textContent=uCur.toFixed(2);
+  document.getElementById('massAudit').textContent=massAuditAcc.toExponential(1);
+}
+function loop(){
+  if(mode==='sim' && playing){
+    for(let s=0;s<speed;s++) stepModel();
+    pushChart(phiMaxCur,uCur,meanDensity());
+    drawChart();
+    refreshDash();
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ---- Mode switching ---- */
+function setMode(m){
+  mode=m;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.mode===m));
+  document.getElementById('view-info').classList.toggle('hide',m!=='info');
+  document.getElementById('view-dash').classList.toggle('hide',m==='info');
+  document.getElementById('simControls').classList.toggle('hide',m!=='sim');
+  document.getElementById('chartCard').classList.toggle('hide',m!=='sim');
+  document.getElementById('manualCard').classList.toggle('hide',m!=='manual');
+  if(m==='manual'){ playing=false; if(!zonesBuilt) buildZones(); }
+  if(m==='sim' && !chartData.length){ initScenario(document.getElementById('scenario').value); }
+  refreshDash();
+}
+
+/* ---- Manual mode zones ---- */
+const ZONES=[ // logical zones mapped to grid rectangles
+  {id:'A',cx:20,cy:30,sx:12,sy:20}, {id:'B',cx:40,cy:18,sx:12,sy:12},
+  {id:'C',cx:40,cy:42,sx:12,sy:12}, {id:'D',cx:60,cy:30,sx:9,sy:20},
+  {id:'E',cx:78,cy:18,sx:12,sy:12}, {id:'F',cx:78,cy:42,sx:12,sy:12}
+];
+let zonesBuilt=false;
+function buildZones(){
+  const grid=document.getElementById('zoneGrid'); grid.innerHTML='';
+  ZONES.forEach(z=>{
+    const L=LANG[curLang];
+    const el=document.createElement('div'); el.className='zone';
+    el.innerHTML=`<div class="zn"><span>${L.zone} ${z.id}</span><small><span id="zv_${z.id}">0.0</span>/6</small></div>
+      <input type="range" id="zi_${z.id}" min="0" max="6" step="0.1" value="0">
+      <div class="zbar"><i id="zb_${z.id}" style="width:0%;background:#22c55e"></i></div>`;
+    grid.appendChild(el);
+    const inp=el.querySelector('input');
+    inp.addEventListener('input',()=>{
+      const v=parseFloat(inp.value);
+      document.getElementById('zv_'+z.id).textContent=v.toFixed(1);
+      const bar=document.getElementById('zb_'+z.id);
+      bar.style.width=(v/6*100)+'%'; bar.style.background=colorFor(v);
+    });
+  });
+  zonesBuilt=true;
+}
+function manualToGrid(){
+  rho=makeGrid(0); rhoPrev=makeGrid(0);
+  ZONES.forEach(z=>{
+    const v=parseFloat(document.getElementById('zi_'+z.id).value)||0;
+    for(let j=0;j<P.Ny;j++)for(let i=0;i<P.Nx;i++){
+      rho[j][i]=Math.min(P.rhomax, rho[j][i]+v*Math.exp(-Math.pow((i-z.cx)/z.sx,2)-Math.pow((j-z.cy)/z.sy,2)));
+    }
+  });
+  // simulate temporal surge from slider so Cr channel is exercised
+  const surge=parseFloat(document.getElementById('surge').value)/100;
+  for(let j=0;j<P.Ny;j++) rhoPrev[j]=rho[j].map(v=>Math.max(0,v*(1-0.6*surge)));
+  configField(0.9,0);
+}
+function computeManual(){
+  manualToGrid();
+  // one risk evaluation pass without advancing transport
+  let phiMax=0,amx=argmax.x,amy=argmax.y;
+  for(let j=0;j<P.Ny;j++)for(let i=0;i<P.Nx;i++){
+    const r=rho[j][i];
+    const ip=Math.min(i+1,P.Nx-1),im=Math.max(i-1,0),jp=Math.min(j+1,P.Ny-1),jm=Math.max(j-1,0);
+    const rx=(rho[j][ip]-rho[j][im])/2, ry=(rho[jp][i]-rho[jm][i])/2;
+    const varV=Math.pow(P.vf/P.rhomax,2)*(rx*rx+ry*ry);
+    const Cr=Math.max(0,(r-rhoPrev[j][i])/P.dt);
+    const R=P.a1*(r/P.rhomax)+P.a2*(r*varV/P.Pmax)+P.a3*(Cr/P.Cmax);
+    const ph=phiOf(R); if(ph>phiMax){phiMax=ph;amx=i;amy=j;}
+  }
+  phiMaxCur=phiMax; uCur=kappa(phiMax); argmax={x:amx,y:amy}; drone={x:amx,y:amy};
+  refreshDash();
+  toast(LANG[curLang].computed.replace('{p}',phiMax.toFixed(2)).replace('{u}',uCur.toFixed(2)));
+}
+
+/* ============================================================
+   4) BILINGUAL (AR / EN)
+   ============================================================ */
+const LANG={
+ ar:{ dir:'rtl', html:'ar', btn:'EN',
+  title:'حارس الحشود الذكي', sub:'نظام الاستشعار والتنبؤ والتدخّل للسلامة في التجمعات',
+  install:'تثبيت', tab_sim:'وضع المحاكاة', tab_manual:'الإدخال التشغيلي', tab_info:'عن النموذج',
+  map:'خريطة كثافة الحشد اللحظية', entrance:'◀ المدخل', gate:'البوابة / التفريغ ▶',
+  low:'منخفض', high:'حرج', drone:'الدرون', risk:'مؤشر الخطر Φ', phimax:'أقصى Φ في الميدان',
+  stats:'المؤشرات الحية والضمانات الرياضية', meanrho:'متوسط الكثافة', maxrho:'أقصى كثافة',
+  cap:'السعة القصوى ρmax', ulevel:'التفريغ الحالي u', gatestate:'حالة البوابات',
+  mass:'تدقيق الكتلة', massu:'انحراف (≈ دقة الآلة)',
+  scenwrap:'السيناريو', speedwrap:'السرعة', reset:'تصفير',
+  trend:'التطور الزمني: الخطر Φ مقابل التحكم u', l_phi:'أقصى Φ', l_u:'التفريغ u', l_rho:'متوسط الكثافة',
+  manual_h:'إدخال قياسات الكثافة الحقيقية (أشخاص/م²)',
+  manual_help:'أدخل الكثافة المقيسة في كل منطقة (0 إلى 6). يحسب النظام مؤشر الخطر Φ والإجراء الموصى به فوراً وفق النموذج المعتمد.',
+  compute:'احسب الخطر والإجراء', loadmap:'اعرض على الخريطة', surgewrap:'تصاعد زمني مُقدّر',
+  zone:'المنطقة', reset_lbl:'تصفير', pause:'⏸ إيقاف مؤقت', play:'▶ تشغيل',
+  about_h:'فكرة الجهاز والتطبيق', params_h:'المعاملات الرياضية المعتمدة', thr_h:'عتبات التحكّم Φ ← u',
+  foot1:'القلب الرياضي المعتمد: قانون حفظ LWR + مخطط Godunov المصحّح + مصدر/مصرف محدود سعوياً — يضمن ρ∈[0,6] وتدقيق كتلة دقيق.',
+  foot2:'مبني على بحث «دراسة رياضية شاملة لنموذج طائرة حارس الحشود الذكية» — جامعة القصيم.',
+  computed:'تم الحساب: أقصى Φ = {p} ← التفريغ u = {u}',
+  installed:'التطبيق قابل للتثبيت الآن — استخدم زر التثبيت أو «إضافة إلى الشاشة الرئيسية».',
+  scen:{haram:'الحرم / المطاف',stadium:'ملعب رياضي',festival:'مهرجان مفتوح',calm:'حالة هادئة'},
+  status:{safe:'آمن',watch:'تحذير',high:'خطر مرتفع',crit:'حرج — تدخّل فوري'},
+  uladder:['إغلاق','جزئي','مرتفع','أقصى'],
+  actions:{
+    safe:{icon:'✓',title:'الوضع آمن',sub:'لا يلزم أي إجراء — استمرار المراقبة'},
+    watch:{icon:'⚠',title:'انتبه: بوادر ازدحام',sub:'تفعيل تفريغ جزئي (u=0.25) وتوجيه لُطفي عبر المكبرات'},
+    high:{icon:'⛔',title:'خطر مرتفع — وجّه الحشد',sub:'افتح البوابات (u=0.55) ووجّه الحشد إلى البوابة البديلة فوراً'},
+    crit:{icon:'🚨',title:'حالة حرجة — تدخّل فوري',sub:'أقصى تفريغ (u=0.90) — إيقاف الدخول وإخلاء نقطة الاختناق'}
+  },
+  about:`<p><b>حارس الحشود الذكي</b> هو التطبيق الذي ينفّذ القلب الرياضي المعتمد لجهاز الطائرة الابتكاري: حلقة مغلقة من ثلاث مراحل — <b>استشعار</b> كثافة الحشد ρ لحظياً، <b>تنبؤ</b> بمؤشر الخطر Φ، ثم <b>تدخّل</b> بفتح بوابات وتوجيه.</p>
+  <p>يُبنى مؤشر الخطر من ثلاث بوادر تسبق حوادث التدافع: <b>مستوى الكثافة</b> (ρ/ρmax)، و<b>الانحدار المكاني</b> |∇ρ|² (سحق الأطراف)، و<b>التصاعد الزمني</b> (∂ρ/∂t)₊. تُجمع في R ثم تُحوَّل عبر الخريطة <span class="kbd">Φ = R/(1+R)</span> المحصورة دائماً في [0،1).</p>
+  <p>حركة الكثافة تُحاكى بقانون الحفظ من نوع LWR مع مخطط <b>Godunov</b> المصحّح، الذي يضمن رياضياً أن الكثافة تبقى في المجال [0، 6] وأن كل شخص يدخل أو يخرج أو يُوجَّه محسوب بدقة (تدقيق الكتلة).</p>
+  <p><b>وضع المحاكاة</b> يعرض سيناريوهات (الحرم، ملعب، مهرجان) للتدريب والعرض. <b>وضع الإدخال التشغيلي</b> يتيح للمشغّل إدخال قياسات كثافة حقيقية لكل منطقة فيحصل فوراً على مؤشر الخطر والإجراء الموصى به.</p>`,
+  thr:`عتبات التحكّم العتبي المعتمدة (κ):<br>
+  • Φ &lt; 0.30 ← <b>u = 0</b> (لا تدخّل)<br>
+  • 0.30 ≤ Φ &lt; 0.60 ← <b>u = 0.25</b> (تفريغ جزئي)<br>
+  • 0.60 ≤ Φ &lt; 0.80 ← <b>u = 0.55</b> (تفريغ مرتفع + توجيه)<br>
+  • Φ ≥ 0.80 ← <b>u = 0.90</b> (أقصى تفريغ — تدخّل فوري)`
+ },
+ en:{ dir:'ltr', html:'en', btn:'ع',
+  title:'SmartCrowd Guardian', sub:'Sense–Predict–Act safety system for mass gatherings',
+  install:'Install', tab_sim:'Simulation', tab_manual:'Operational input', tab_info:'About the model',
+  map:'Live crowd-density map', entrance:'◀ Entrance', gate:'Gate / Discharge ▶',
+  low:'Low', high:'Critical', drone:'Drone', risk:'Risk index Φ', phimax:'Field maximum of Φ',
+  stats:'Live indicators & mathematical guarantees', meanrho:'Mean density', maxrho:'Max density',
+  cap:'Capacity ρmax', ulevel:'Discharge u', gatestate:'Gate state',
+  mass:'Mass audit', massu:'residual (≈ machine ε)',
+  scenwrap:'Scenario', speedwrap:'Speed', reset:'Reset',
+  trend:'Time evolution: risk Φ vs control u', l_phi:'max Φ', l_u:'discharge u', l_rho:'mean density',
+  manual_h:'Enter measured density (persons/m²)',
+  manual_help:'Enter the measured density in each zone (0 to 6). The system instantly computes the risk index Φ and the recommended action per the certified model.',
+  compute:'Compute risk & action', loadmap:'Show on map', surgewrap:'Estimated temporal surge',
+  zone:'Zone', reset_lbl:'Reset', pause:'⏸ Pause', play:'▶ Play',
+  about_h:'Concept of the device & app', params_h:'Certified model parameters', thr_h:'Control thresholds Φ ← u',
+  foot1:'Certified core: LWR conservation law + corrected Godunov scheme + capacity-capped source/sink — guarantees ρ∈[0,6] with an exact mass audit.',
+  foot2:'Based on “A Comprehensive Mathematical Study of the SmartCrowd Guardian Drone Model” — Qassim University.',
+  computed:'Computed: max Φ = {p} → discharge u = {u}',
+  installed:'App is installable now — use the Install button or “Add to Home Screen”.',
+  scen:{haram:'Holy site / Tawaf',stadium:'Stadium',festival:'Open festival',calm:'Calm state'},
+  status:{safe:'Safe',watch:'Warning',high:'High risk',crit:'Critical — act now'},
+  uladder:['Off','Partial','High','Max'],
+  actions:{
+    safe:{icon:'✓',title:'Situation safe',sub:'No action needed — keep monitoring'},
+    watch:{icon:'⚠',title:'Caution: congestion onset',sub:'Engage partial discharge (u=0.25) and gentle loudspeaker guidance'},
+    high:{icon:'⛔',title:'High risk — redirect the crowd',sub:'Open gates (u=0.55) and redirect the crowd to the alternate gate now'},
+    crit:{icon:'🚨',title:'Critical — immediate action',sub:'Maximum discharge (u=0.90) — halt entry and clear the bottleneck'}
+  },
+  about:`<p><b>SmartCrowd Guardian</b> is the application that runs the certified mathematical core of the innovative drone device: a three-stage closed loop — <b>sense</b> the crowd density ρ in real time, <b>predict</b> the risk index Φ, then <b>act</b> by opening gates and redirecting.</p>
+  <p>The risk index is built from three precursors of crush events: the <b>density level</b> (ρ/ρmax), the <b>spatial gradient</b> |∇ρ|² (edge crushing), and the <b>temporal surge</b> (∂ρ/∂t)₊. They combine into R, mapped through <span class="kbd">Φ = R/(1+R)</span>, always confined to [0,1).</p>
+  <p>Density evolves under an LWR-type conservation law with the corrected <b>Godunov</b> scheme, which mathematically guarantees the density stays in [0, 6] and that every person who enters, leaves or is redirected is exactly accounted for (mass audit).</p>
+  <p><b>Simulation mode</b> shows scenarios (holy site, stadium, festival) for training and demonstration. <b>Operational input mode</b> lets an operator enter real density measurements per zone and instantly receive the risk index and recommended action.</p>`,
+  thr:`Certified threshold control (κ):<br>
+  • Φ &lt; 0.30 → <b>u = 0</b> (no action)<br>
+  • 0.30 ≤ Φ &lt; 0.60 → <b>u = 0.25</b> (partial discharge)<br>
+  • 0.60 ≤ Φ &lt; 0.80 → <b>u = 0.55</b> (high discharge + guidance)<br>
+  • Φ ≥ 0.80 → <b>u = 0.90</b> (max discharge — act now)`
+ }
+};
+let curLang='ar';
+function applyLang(){
+  const L=LANG[curLang];
+  document.documentElement.lang=L.html; document.documentElement.dir=L.dir;
+  document.getElementById('langBtn').textContent=L.btn;
+  const set=(id,txt)=>{const e=document.getElementById(id);if(e)e.textContent=txt;};
+  set('t_title',L.title);set('t_sub',L.sub);set('t_install',L.install);
+  set('t_tab_sim',L.tab_sim);set('t_tab_manual',L.tab_manual);set('t_tab_info',L.tab_info);
+  set('t_map',L.map);set('t_entrance',L.entrance);set('t_gate',L.gate);
+  set('t_low',L.low);set('t_high',L.high);set('t_drone',L.drone);
+  set('t_risk',L.risk);set('t_phimax',L.phimax);set('t_stats',L.stats);
+  set('t_meanrho',L.meanrho);set('t_maxrho',L.maxrho);set('t_cap',L.cap);
+  set('t_ulevel',L.ulevel);set('t_gatestate',L.gatestate);set('t_mass',L.mass);set('t_massu',L.massu);
+  set('t_reset',L.reset);set('t_trend',L.trend);set('t_l_phi',L.l_phi);set('t_l_u',L.l_u);set('t_l_rho',L.l_rho);
+  set('t_manual_h',L.manual_h);set('t_manual_help',L.manual_help);set('t_compute',L.compute);
+  set('t_loadmap',L.loadmap);set('t_about_h',L.about_h);set('t_params_h',L.params_h);set('t_thr_h',L.thr_h);
+  set('t_foot1',L.foot1);set('t_foot2',L.foot2);
+  // labels wrapping selects/sliders (keep child controls)
+  document.querySelector('#t_scenwrap').childNodes[0].nodeValue=L.scenwrap+' ';
+  document.querySelector('#t_speedwrap').childNodes[0].nodeValue=L.speedwrap+' ';
+  document.querySelector('#t_surgewrap').childNodes[0].nodeValue=L.surgewrap+' ';
+  // scenario option labels
+  const sc=document.getElementById('scenario');
+  [...sc.options].forEach(o=>o.textContent=L.scen[o.value]);
+  // play button
+  document.getElementById('playBtn').textContent=playing?L.pause:L.play;
+  // info bodies
+  document.getElementById('aboutBody').innerHTML=L.about;
+  document.getElementById('thrBody').innerHTML=L.thr;
+  document.getElementById('cflPill').textContent = curLang==='ar'?'CFL = 0.065 ✓ (آمن ×15)':'CFL = 0.065 ✓ (safe ×15)';
+  // translate the u-ladder rungs
+  document.querySelectorAll('#uladder .urung').forEach((r,k)=>{ r.innerHTML=`${L.uladder[k]}<br>u=${r.dataset.u}`; });
+  if(zonesBuilt){zonesBuilt=false;buildZones();}
+  refreshDash();
+}
+
+/* ============================================================
+   5) EVENTS + PWA + BOOT
+   ============================================================ */
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
+
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>setMode(t.dataset.mode)));
+document.getElementById('langBtn').addEventListener('click',()=>{curLang=curLang==='ar'?'en':'ar';applyLang();});
+document.getElementById('playBtn').addEventListener('click',()=>{playing=!playing;
+  document.getElementById('playBtn').textContent=playing?LANG[curLang].pause:LANG[curLang].play;});
+document.getElementById('resetBtn').addEventListener('click',()=>{initScenario(document.getElementById('scenario').value);refreshDash();});
+document.getElementById('scenario').addEventListener('change',e=>{initScenario(e.target.value);playing=true;
+  document.getElementById('playBtn').textContent=LANG[curLang].pause;});
+document.getElementById('speed').addEventListener('input',e=>speed=parseInt(e.target.value));
+document.getElementById('computeBtn').addEventListener('click',computeManual);
+document.getElementById('loadMapBtn').addEventListener('click',()=>{manualToGrid();refreshDash();});
+
+/* ---- PWA manifest + installability (self-contained, no external files) ---- */
+const ICON_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><radialGradient id="g" cx="35%" cy="30%"><stop offset="0" stop-color="#38bdf8"/><stop offset="1" stop-color="#1e3a8a"/></radialGradient></defs><rect width="512" height="512" rx="112" fill="#0b1120"/><circle cx="256" cy="256" r="168" fill="url(#g)"/><path d="M256 120 148 168v96c0 84 66 138 108 156 42-18 108-72 108-156v-96z" fill="none" stroke="#fff" stroke-width="20" stroke-linejoin="round"/><circle cx="256" cy="248" r="42" fill="#fff"/></svg>`;
+const iconURL='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(ICON_SVG)));
+const manifest={ name:'SmartCrowd Guardian — حارس الحشود الذكي', short_name:'SmartCrowd',
+  description:'Sense–Predict–Act crowd-safety system', start_url:'.', scope:'.',
+  display:'standalone', orientation:'any', background_color:'#0b1120', theme_color:'#0b1120', lang:'ar', dir:'auto',
+  icons:[{src:iconURL,sizes:'192x192',type:'image/svg+xml',purpose:'any maskable'},
+         {src:iconURL,sizes:'512x512',type:'image/svg+xml',purpose:'any maskable'}] };
+document.querySelector('.logo').innerHTML='';
+// PWA: external manifest + icons are linked in <head>; register the real same-origin service worker.
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{ navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
+}
+/* ---- Smart install: real prompt when possible, else per-platform guidance ---- */
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;});
+window.addEventListener('appinstalled',()=>{deferredPrompt=null;toast(curLang==='ar'?'تم التثبيت بنجاح ✓':'Installed successfully ✓');});
+
+function envInfo(){
+  const ua=navigator.userAgent||'';
+  const isFile=location.protocol==='file:';
+  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  const isIOS=/iPad|iPhone|iPod/.test(ua)|| (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const isAndroid=/Android/.test(ua);
+  const isSafari=/^((?!chrome|android|crios|fxios).)*safari/i.test(ua);
+  return {isFile,isStandalone,isIOS,isAndroid,isSafari};
+}
+const IHELP={
+ ar:{
+  title:'تثبيت التطبيق', ok:'حسناً',
+  installed:{lead:'التطبيق مُثبّت ويعمل الآن كتطبيق مستقل. ✓', steps:[]},
+  file:{lead:'أنت تفتح التطبيق كملفٍّ محلي، والمتصفحات لا تسمح بالتثبيت في هذه الحالة. لجعله قابلاً للتثبيت، يجب فتحه عبر رابط ويب آمن (https).',
+    warn:'الحل الأسرع: ارفع مجلد الحزمة المرفقة على استضافة مجانية (مثل Netlify Drop) لتحصل على رابط، ثم افتحه على جوالك أو حاسوبك وستظهر خاصية التثبيت.',
+    steps:[
+     ['1','افتح <b>app.netlify.com/drop</b> من المتصفح.'],
+     ['2','اسحب مجلد الحزمة «SmartCrowd_Guardian_App» وأفلته في الصفحة.'],
+     ['3','ستحصل خلال ثوانٍ على رابط <b>https://…netlify.app</b>.'],
+     ['4','افتح الرابط على جوالك/حاسوبك ← ستظهر خاصية «تثبيت / إضافة إلى الشاشة الرئيسية».']
+    ]},
+  ios:{lead:'على آيفون/آيباد (متصفح Safari)، التثبيت يدوي عبر زر المشاركة:',
+    steps:[
+     ['1','تأكد أنك تفتح الرابط في متصفح <b>Safari</b>.'],
+     ['2','اضغط زر <b>المشاركة</b> (المربع مع السهم لأعلى ⬆️) بالأسفل.'],
+     ['3','اختر <b>«إضافة إلى الشاشة الرئيسية»</b>.'],
+     ['4','اضغط <b>«إضافة»</b> — ستظهر أيقونة التطبيق على شاشتك.']
+    ]},
+  android:{lead:'على أندرويد (متصفح Chrome):',
+    steps:[
+     ['1','اضغط زر القائمة (⋮) أعلى المتصفح.'],
+     ['2','اختر <b>«تثبيت التطبيق»</b> أو «إضافة إلى الشاشة الرئيسية».'],
+     ['3','أكّد التثبيت — ستظهر الأيقونة على شاشتك ويعمل دون إنترنت.']
+    ]},
+  desktop:{lead:'على الحاسوب (Chrome / Edge):',
+    steps:[
+     ['1','ابحث عن أيقونة التثبيت ⊕ في نهاية شريط العنوان (بجوار الرابط).'],
+     ['2','أو من القائمة (⋮) اختر <b>«تثبيت SmartCrowd Guardian…»</b>.'],
+     ['3','اضغط «تثبيت» — سيُفتح التطبيق في نافذته الخاصة.']
+    ]}
+ },
+ en:{
+  title:'Install the app', ok:'Got it',
+  installed:{lead:'The app is already installed and running as a standalone app. ✓', steps:[]},
+  file:{lead:'You are opening the app as a local file, and browsers do not allow installation in that case. To make it installable, it must be opened over a secure web link (https).',
+    warn:'Fastest fix: upload the attached app folder to free hosting (e.g. Netlify Drop) to get a link, then open it on your phone or laptop and the install option will appear.',
+    steps:[
+     ['1','Open <b>app.netlify.com/drop</b> in your browser.'],
+     ['2','Drag the “SmartCrowd_Guardian_App” folder onto the page.'],
+     ['3','Within seconds you get a <b>https://…netlify.app</b> link.'],
+     ['4','Open that link on your phone/laptop → the “Install / Add to Home Screen” option appears.']
+    ]},
+  ios:{lead:'On iPhone/iPad (Safari), installing is manual via the Share button:',
+    steps:[
+     ['1','Make sure you opened the link in <b>Safari</b>.'],
+     ['2','Tap the <b>Share</b> button (square with an up arrow ⬆️).'],
+     ['3','Choose <b>“Add to Home Screen”</b>.'],
+     ['4','Tap <b>“Add”</b> — the app icon appears on your home screen.']
+    ]},
+  android:{lead:'On Android (Chrome):',
+    steps:[
+     ['1','Tap the menu (⋮) at the top of the browser.'],
+     ['2','Choose <b>“Install app”</b> or “Add to Home screen”.'],
+     ['3','Confirm — the icon appears and it works offline.']
+    ]},
+  desktop:{lead:'On desktop (Chrome / Edge):',
+    steps:[
+     ['1','Look for the install icon ⊕ at the end of the address bar.'],
+     ['2','Or from the menu (⋮) choose <b>“Install SmartCrowd Guardian…”</b>.'],
+     ['3','Click “Install” — it opens in its own window.']
+    ]}
+ }
+};
+function showInstallHelp(kind){
+  const H=IHELP[curLang], sec=H[kind];
+  document.getElementById('im_title').textContent=H.title;
+  document.getElementById('im_ok').textContent=H.ok;
+  document.getElementById('im_lead').textContent=sec.lead;
+  let html='';
+  if(sec.warn) html+=`<div class="warnbox">${sec.warn}</div>`;
+  if(kind==='installed') html+=`<div class="okbox">${sec.lead}</div>`;
+  sec.steps.forEach(s=>{ html+=`<div class="step"><div class="n">${s[0]}</div><div class="d">${s[1]}</div></div>`; });
+  document.getElementById('im_body').innerHTML = kind==='installed'? '' : html;
+  document.getElementById('installModal').classList.add('show');
+}
+document.getElementById('installBtn').addEventListener('click',async()=>{
+  const E=envInfo();
+  if(deferredPrompt){                 // native prompt available -> real install
+    deferredPrompt.prompt();
+    try{await deferredPrompt.userChoice;}catch(e){}
+    deferredPrompt=null; return;
+  }
+  if(E.isStandalone){ showInstallHelp('installed'); return; }
+  if(E.isFile){ showInstallHelp('file'); return; }
+  if(E.isIOS){ showInstallHelp('ios'); return; }
+  if(E.isAndroid){ showInstallHelp('android'); return; }
+  showInstallHelp('desktop');
+});
+// hide install button if already installed
+if(window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true){
+  document.getElementById('installBtn').classList.add('hide');
+}
+document.getElementById('installModal').addEventListener('click',e=>{
+  if(e.target.id==='installModal') e.target.classList.remove('show');
+});
+
+/* re-render logo (was cleared) */
+document.querySelector('.logo').innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6v6c0 5 3.8 8.4 9 10 5.2-1.6 9-5 9-10V6z"/><circle cx="12" cy="11" r="2.4"/></svg>';
+
+window.addEventListener('resize',()=>{drawHeat();drawChart();});
+
+/* boot */
+initScenario('haram');
+applyLang();
+setMode('sim');
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
