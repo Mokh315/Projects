@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEMG — دليل التثبيت / Install Guide</title>
+<style>
+:root{--navy:#1f3a5f;--navy2:#2c527f;--bg:#f4f6fa;--panel:#fff;--ink:#1b2430;--muted:#5b6b7f;--line:#dde4ee;--green:#2e8b57;--orange:#e07b39}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Naskh Arabic",Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.65}
+header{background:linear-gradient(120deg,var(--navy),var(--navy2));color:#fff;padding:22px 18px;text-align:center}
+header .logo{display:inline-grid;place-items:center;width:52px;height:52px;border-radius:13px;background:rgba(255,255,255,.16);font-weight:800;margin-bottom:8px}
+header h1{margin:0;font-size:19px}header p{margin:4px 0 0;opacity:.85;font-size:13px}
+.wrap{max-width:760px;margin:0 auto;padding:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0;box-shadow:0 1px 3px rgba(20,40,80,.06)}
+h2{font-size:16px;margin:2px 0 10px;color:var(--navy)}
+.badge{display:inline-block;background:var(--green);color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;margin-inline-start:8px;vertical-align:middle}
+ol{margin:8px 0;padding-inline-start:22px}li{margin:7px 0;font-size:14px}
+.k{font-weight:700}
+a{color:var(--navy2);word-break:break-all}
+.muted{color:var(--muted);font-size:12.5px}
+.en{direction:ltr;text-align:left;border-top:1px dashed var(--line);margin-top:12px;padding-top:10px;color:var(--muted);font-size:13px}
+.tag{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:2px 8px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.step{background:var(--bg);border-inline-start:4px solid var(--navy);border-radius:8px;padding:10px 14px;margin:8px 0;font-size:13.5px}
+.pill{display:inline-block;background:var(--orange);color:#fff;border-radius:6px;font-size:11px;font-weight:700;padding:2px 8px}
+.dev{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;margin:10px 0}
+.dev .ic{font-size:22px}
+footer{text-align:center;color:var(--muted);font-size:11.5px;padding:16px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">SEMG</div>
+  <h1>دليل التثبيت على الجوال والأجهزة</h1>
+  <p>Install SEMG on phone, tablet &amp; computer</p>
+</header>
+<div class="wrap">
+
+  <div class="card">
+    <h2>لماذا لم ينجح التثبيت؟</h2>
+    <p style="font-size:14px">تطبيقات الويب (PWA) لا تُثبَّت كأيقونة تطبيق حقيقية إلا عند فتحها من <span class="k">رابط إنترنت آمن (https)</span>. فتح الملف المحلي مباشرةً يعرض التطبيق ويعمل، لكنه <span class="k">لا يُفعّل زر التثبيت</span>. الحل: ارفع الحزمة مرّة واحدة إلى خدمة مجانية، ثم ثبّت من الرابط على كل أجهزتك.</p>
+    <div class="en">Real PWA install requires opening the app from a secure <b>https URL</b>. Opening the local file works but won't trigger “Install”. Fix: host the package once (free), then install from the link on every device.</div>
+  </div>
+
+  <div class="card">
+    <h2>الطريقة الأسهل: استضافة بالسحب والإفلات <span class="badge">موصى بها</span></h2>
+    <p style="font-size:14px">تحتاج حاسوباً لهذه الخطوة مرّة واحدة فقط. بعدها الرابط يعمل على كل الأجهزة.</p>
+    <ol>
+      <li>فُكّ ضغط الملف <span class="tag">SEMG_PWA_bilingual.zip</span> فتحصل على مجلّد فيه <span class="tag">index.html</span> وبقية الملفات.</li>
+      <li>افتح إحدى هذه الخدمات المجانية في المتصفح:
+        <div class="step"><span class="pill">بلا حساب</span> <span class="k">Cloudflare Drop</span> — <a href="https://cloudflare.com/developer-platform/products/pages/">pages.dev</a> (أو ابحث «Cloudflare Drop»): اسحب المجلّد فيظهر رابط فوراً.</div>
+        <div class="step"><span class="k">Netlify Drop</span> — <a href="https://app.netlify.com/drop">app.netlify.com/drop</a>: اسحب المجلّد؛ يعطيك رابطاً فوراً (قد يطلب تسجيلاً مجانياً للاحتفاظ به).</div>
+        <div class="step"><span class="k">tiiny.host</span> — <a href="https://tiiny.host">tiiny.host</a>: يمكنك سحب ملف <span class="tag">.zip</span> مباشرةً دون فكّ الضغط.</div>
+      </li>
+      <li>اسحب المجلّد (أو ملف zip في tiiny) إلى الصفحة، وانتظر ثوانٍ.</li>
+      <li>ستحصل على <span class="k">رابط https</span> مثل <span class="tag">https://اسم-عشوائي.pages.dev</span>. احفظه وافتحه على جوالك.</li>
+      <li>ثبّت التطبيق حسب جهازك (انظر الأسفل).</li>
+    </ol>
+    <div class="en">Unzip the package → open a free drag-drop host (Cloudflare Drop = no account; Netlify Drop; or tiiny.host which accepts the .zip directly) → drag the folder → get an https link → open it on your phone → install.</div>
+  </div>
+
+  <div class="card">
+    <h2>خطوات التثبيت حسب الجهاز</h2>
+    <div class="dev"><div class="ic">📱</div><div>
+      <span class="k">آيفون / آيباد (Safari):</span> افتح الرابط في <span class="k">Safari</span> ← زر المشاركة <span class="tag">⬆︎</span> ← «<span class="k">إضافة إلى الشاشة الرئيسية</span>» (Add to Home Screen) ← «إضافة».
+      <div class="en">iPhone/iPad: open the link in <b>Safari</b> → Share → <b>Add to Home Screen</b> → Add.</div>
+    </div></div>
+    <div class="dev"><div class="ic">🤖</div><div>
+      <span class="k">أندرويد (Chrome):</span> افتح الرابط في <span class="k">Chrome</span> ← قائمة ⋮ ← «<span class="k">تثبيت التطبيق</span>» أو «إضافة إلى الشاشة الرئيسية» ← «تثبيت».
+      <div class="en">Android: open in <b>Chrome</b> → ⋮ menu → <b>Install app</b> / Add to Home screen → Install.</div>
+    </div></div>
+    <div class="dev"><div class="ic">💻</div><div>
+      <span class="k">ويندوز / ماك (Chrome أو Edge):</span> افتح الرابط ← اضغط <span class="k">أيقونة التثبيت</span> في شريط العنوان (⊕ / شاشة بسهم) ← «تثبيت».
+      <div class="en">Windows/Mac: open in Chrome/Edge → click the <b>install icon</b> in the address bar → Install.</div>
+    </div></div>
+    <p class="muted">بعد التثبيت تظهر أيقونة SEMG على الشاشة الرئيسية وتفتح بملء الشاشة وتعمل دون إنترنت.</p>
+  </div>
+
+  <div class="card">
+    <h2>بديل سريع: استخدام دون تثبيت</h2>
+    <p style="font-size:14px">إن لم ترغب بالاستضافة الآن: افتح ملف <span class="tag">SEMG_app_bilingual.html</span> مباشرةً في متصفح الجوال أو الحاسوب — يعمل بكامل وظائفه ودون إنترنت. على آيفون يمكنك أحياناً «إضافته إلى الشاشة الرئيسية» من Safari كاختصار، لكن التثبيت الحقيقي (أيقونة مستقلة تعمل دون اتصال) يحتاج الرابط المستضاف أعلاه.</p>
+    <div class="en">No hosting: just open <b>SEMG_app_bilingual.html</b> in any browser — fully functional and offline. A real installable icon needs the hosted link above.</div>
+  </div>
+
+  <div class="card">
+    <h2>نصيحة</h2>
+    <p style="font-size:14px">للاستخدام الدائم مع أيقونة على الشاشة الرئيسية، استضافة مرّة واحدة عبر <span class="k">Cloudflare Drop</span> أو <span class="k">tiiny.host</span> هي أسرع طريق (دقيقتان). شارك الرابط مع فريقك ليثبّته الجميع.</p>
+  </div>
+
+</div>
+<footer>SEMG — Student Engagement Monitoring Guardian · دليل التثبيت</footer>
+</body>
+</html>
